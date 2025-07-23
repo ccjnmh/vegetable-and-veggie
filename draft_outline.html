@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Freshness Detector for Aquaponics & Hydroponics</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Fira+Code:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #1a1a2e;
+            --slide-bg: #16213e;
+            --primary-text: #e0e0e0;
+            --header-text: #ffffff;
+            --accent-color: #0f3460;
+            --highlight-color: #53a8b6;
+            --code-bg: #0d1117;
+            --code-text: #c9d1d9;
+            --comment-color: #8b949e;
+            --string-color: #a5d6ff;
+            --keyword-color: #ff7b72;
+            --number-color: #79c0ff;
+            --button-bg: #e94560;
+            --button-hover-bg: #c42d48;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #presentation-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem 4rem;
+            box-sizing: border-box;
+            background-color: var(--slide-bg);
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        .slide-content {
+            max-width: 900px;
+            width: 100%;
+            text-align: left;
+        }
+
+        h1, h2, h3 {
+            font-weight: 700;
+            color: var(--header-text);
+            margin-bottom: 0.5em;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: var(--highlight-color);
+            border-bottom: 3px solid var(--highlight-color);
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            color: var(--header-text);
+        }
+        
+        h3 {
+            font-size: 1.6rem;
+            color: var(--highlight-color);
+        }
+
+        p, li {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%2353a8b6" d="M10 17l5-5-5-5v10z"/></svg>') no-repeat left center;
+            padding-left: 30px;
+            margin-bottom: 15px;
+        }
+        
+        .title-slide h1 {
+            font-size: 3.5rem;
+        }
+        
+        .title-slide h2 {
+            font-size: 1.8rem;
+            font-weight: 300;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1.5em;
+            text-align: left;
+            font-family: 'Fira Code', monospace;
+            font-size: 1rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: var(--code-text);
+            margin: 20px 0;
+        }
+
+        code {
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .inline-code {
+            background-color: var(--accent-color);
+            color: var(--highlight-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        .comment { color: var(--comment-color); }
+        .string { color: var(--string-color); }
+        .keyword { color: var(--keyword-color); }
+        .number { color: var(--number-color); }
+        .function { color: #d2a8ff; }
+        .variable { color: #ffa657; }
+
+
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background-color: var(--button-bg);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .nav-btn:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-2px);
+        }
+        
+        .nav-btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        #page-counter {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            font-size: 1rem;
+            color: #aaa;
+            background-color: rgba(0,0,0,0.3);
+            padding: 5px 10px;
+            border-radius: 10px;
+            z-index: 100;
+        }
+
+        .highlight {
+            color: var(--highlight-color);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="presentation-container">
+        
+        <!-- Title Slide -->
+        <div class="slide active title-slide">
+            <h1>Building an AI Freshness Detector</h1>
+            <h2>A Project for Aquaponics (魚菜共生) and Hydroponics (水耕種植)</h2>
+            <p style="margin-top: 50px;">Click 'Next' to begin the course.</p>
+        </div>
+        
+        <!-- Module 1: Lesson 1 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 1: What is AI and How Does it "See"?</h2>
+                <h3>Objective: Understand AI, Computer Vision (CV), and Machine Learning (ML).</h3>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Introduction: AI in Smart Farming (10 mins)</h3>
+                <p>Artificial Intelligence (AI) is transforming agriculture and farming. It's not science fiction; it's happening now in systems like <span class="highlight">Aquaponics and Hydroponics</span>.</p>
+                <ul>
+                    <li>How can an automated system know which plants are healthy and which are sick?</li>
+                    <li>How can we automatically measure if our lettuce is big enough to harvest?</li>
+                    <li>How can a machine sort good strawberries from bad ones without a human?</li>
+                </ul>
+                <p>The answer is AI. We're going to build a system that does exactly this.</p>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>What is Computer Vision? (15 mins)</h3>
+                <p>Computer Vision (CV) is a field of AI that teaches computers to <span class="highlight">"see" and understand</span> the visual world.</p>
+                <p>Think of automated machines sorting fruit or drones monitoring crop health. That's CV!</p>
+                <p><strong>Our Goal:</strong> Teach the computer to recognize the health of our plants, just like an experienced farmer can tell if a plant is healthy just by looking at it.</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Project Introduction: The AI Freshness Detector (15 mins)</h3>
+                <p>By the end of this course, you will build and run a program that does this:</p>
+                <ul>
+                    <li>Uses a webcam to monitor your plants in real-time.</li>
+                    <li>Identifies vegetables like lettuce and fruits like tomatoes.</li>
+                    <li>Draws a box around them and decides if they are <span style="color: #4CAF50;">HEALTHY/FRESH</span> or <span style="color: #F44336;">SPOILED/ROTTEN</span>.</li>
+                </ul>
+                <p>You will understand exactly how it works, from the first line of code to the final "AI brain".</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Lesson 1 Wrap-up (5 mins)</h3>
+                <h3>How can this technology help our school's Aquaponics system?</h3>
+                <ul>
+                    <li>Provide 24/7 monitoring of plant health.</li>
+                    <li>Alert us early if a disease starts to appear on one plant.</li>
+                    <li>Help us decide the perfect time to harvest for the best taste.</li>
+                </ul>
+                <p>Let's brainstorm!</p>
+            </div>
+        </div>
+        
+        <!-- Module 1: Lesson 2 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 2: Speaking to the Computer - Your First Python Program</h2>
+                <h3>Objective: Write your first Python code and understand <code class="inline-code">print()</code>, comments, strings, and numbers.</h3>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>What is a Programming Language? (10 mins)</h3>
+                <p>Think of a programming language like a <span class="highlight">recipe for a computer</span>.</p>
+                <p>It needs very specific, step-by-step instructions in a language it understands. We will use <span class="highlight">Python</span>, which is famous for being powerful and easy to read.</p>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>"Hello, Hong Kong!" (15 mins)</h3>
+                <p>Let's give the computer its first instruction. The <code class="inline-code">print()</code> command tells the computer to display something on the screen.</p>
+                <pre><code><span class="comment"># This is a comment. The computer ignores it. It's for humans!</span>
+<span class="function">print</span>(<span class="string">"Hello, World!"</span>)
+
+<span class="comment"># Let's change the message to something local.</span>
+<span class="function">print</span>(<span class="string">"Hello, Hong Kong!"</span>)</code></pre>
+                <p>The text inside the quotation marks <code class="inline-code">" "</code> is called a <span class="highlight">string</span>.</p>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Data Types: Text and Numbers (15 mins)</h3>
+                <p>Python knows the difference between text (strings) and numbers (integers).</p>
+                <pre><code><span class="comment"># This is a string (text)</span>
+<span class="function">print</span>(<span class="string">"This is a head of lettuce"</span>)
+
+<span class="comment"># This is an integer (a whole number)</span>
+<span class="function">print</span>(<span class="number">100</span>)
+
+<span class="comment"># We can also do math with numbers!</span>
+<span class="function">print</span>(<span class="number">5</span> + <span class="number">3</span>) <span class="comment"># Output will be 8</span></code></pre>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Lesson 2 Recap</h3>
+                <p>Key terms we learned today:</p>
+                <ul>
+                    <li><code class="inline-code">print()</code>: The command to display output.</li>
+                    <li><code class="inline-code"># Comment</code>: A note for humans that the code ignores.</li>
+                    <li><code class="inline-code">String</code>: Text data, always inside quotes.</li>
+                    <li><code class="inline-code">Integer</code>: Whole number data, without quotes.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Module 1: Lesson 3 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 3: Making Decisions - Variables and 'If' Statements</h2>
+                <h3>Objective: Understand variables and use <code class="inline-code">if-elif-else</code> to make decisions in code.</h3>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Variables as Labeled Boxes (15 mins)</h3>
+                <p>A <span class="highlight">variable</span> is like a labeled box where you can store information. We give it a name and put data inside it using the <code class="inline-code">=</code> sign.</p>
+                <pre><code><span class="comment"># Storing a string in a variable</span>
+<span class="variable">plant_type</span> = <span class="string">"Lettuce"</span>
+
+<span class="comment"># Storing an integer</span>
+<span class="variable">days_grown</span> = <span class="number">25</span>
+
+<span class="comment"># Storing a True/False value (a Boolean)</span>
+<span class="variable">is_healthy</span> = <span class="keyword">True</span>
+
+<span class="comment"># We can then print the variables to see what's inside</span>
+<span class="function">print</span>(<span class="variable">plant_type</span>)
+<span class="function">print</span>(<span class="variable">days_grown</span>)</code></pre>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Making Choices with 'if' (25 mins)</h3>
+                <p>The <code class="inline-code">if</code> statement lets our program make decisions. It checks if a condition is true.</p>
+                <pre><code><span class="variable">water_level_cm</span> = <span class="number">5</span>
+
+<span class="keyword">if</span> <span class="variable">water_level_cm</span> < <span class="number">10</span>:
+    <span class="function">print</span>(<span class="string">"ALERT: Water level is low! Turn on the pump."</span>)
+<span class="keyword">else</span>:
+    <span class="function">print</span>(<span class="string">"Water level is OK."</span>)</code></pre>
+                <p>This is the core logic of our AI! It will check the plant's health and decide what to do.</p>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Project Link: Deciding the Box Color</h3>
+                <p>Here's a simplified version of the logic from our final project. We use <code class="inline-code">if</code>, <code class="inline-code">elif</code> (else if), and <code class="inline-code">else</code>.</p>
+                <pre><code><span class="variable">health_status</span> = <span class="string">"spoiled"</span>
+
+<span class="keyword">if</span> <span class="variable">health_status</span> == <span class="string">"fresh"</span>:
+    <span class="function">print</span>(<span class="string">"Draw a GREEN box."</span>)
+<span class="keyword">elif</span> <span class="variable">health_status</span> == <span class="string">"fair"</span>:
+    <span class="function">print</span>(<span class="string">"Draw a YELLOW box."</span>)
+<span class="keyword">else</span>:
+    <span class="function">print</span>(<span class="string">"Draw a RED box."</span>)
+</code></pre>
+                <p>This simple choice is how the program decides what color box to draw around a plant!</p>
+            </div>
+        </div>
+
+        <!-- Module 2: Lesson 4 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 4: The Programmer's Toolkit</h2>
+                <h3>Objective: Install VS Code, set up a Python virtual environment, and install libraries with pip.</h3>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>The Programmer's Tools</h3>
+                <ul>
+                    <li><span class="highlight">Visual Studio Code (VS Code):</span> A powerful, free text editor for writing code. It has a built-in terminal, which is our command line.</li>
+                    <li><span class="highlight">Virtual Environment (venv):</span> Think of it as a <span class="highlight">separate pencil case for each project</span>. It keeps the tools (libraries) for our AI project from getting mixed up with other projects on the computer.</li>
+                    <li><span class="highlight">pip:</span> The "Python Installer Package". It's a tool we use in the terminal to download and install libraries written by other developers.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Step-by-Step Setup (20 mins)</h3>
+                <p>Open the terminal in VS Code and follow along. Type these commands one by one and press Enter.</p>
+                <p>1. Create a project folder:</p>
+                <pre><code>mkdir ai_aquaponics_project</code></pre>
+                <p>2. Navigate into it:</p>
+                <pre><code>cd ai_aquaponics_project</code></pre>
+                <p>3. Create the virtual environment:</p>
+                <pre><code>python -m venv .venv</code></pre>
+                <p>4. Activate the environment (this is important!):</p>
+                <pre><code class="comment"># On Windows:</span>
+.venv\Scripts\activate
+
+<span class="comment"># On Mac/Linux:</span>
+source .venv/bin/activate</code></pre>
+                <p>You'll see <code class="inline-code">(.venv)</code> at the start of your terminal prompt. It's active!</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Installing Libraries with pip (5 mins)</h3>
+                <p>Now that our "pencil case" is active, let's install a tool. We'll install <code class="inline-code">numpy</code>, a popular library for math that our project needs.</p>
+                <pre><code>pip install numpy</code></pre>
+                <p>You'll see text as `pip` downloads and installs the package. We'll install more libraries later using this same command!</p>
+            </div>
+        </div>
+        
+        <!-- Module 3: Lesson 5 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 5: Training an AI Brain (in Google Colab)</h2>
+                <h3>Objective: Understand "training" a model and see it happen in real-time.</h3>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>What is Google Colab?</h3>
+                <p>Colab is like <span class="highlight">Google Docs for Python code</span>.</p>
+                <p>It lets us write and run Python code in our browser, and most importantly, it lets us use Google's powerful computers for heavy tasks like <span class="highlight">training an AI model</span>, for free!</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Exploring the Dataset (15 mins)</h3>
+                <p>The "Dataset" is the textbook for our AI. It's a huge collection of labeled images.</p>
+                <ul>
+                    <li>A folder named <code class="inline-code">Lettuce__Healthy</code> with hundreds of pictures of healthy lettuce.</li>
+                    <li>A folder named <code class="inline-code">Lettuce__Rotten</code> with hundreds of pictures of sick or rotting lettuce.</li>
+                    <li>...and so on for tomatoes, strawberries, etc.</li>
+                </ul>
+                <p>We show the AI all these examples so it can learn the visual patterns of "healthy" vs. "unhealthy".</p>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Running the Training (20 mins)</h3>
+                <p>In the Colab notebook, we will run the code cells one by one.</p>
+                <p>Keep an eye on the output! You will see something like this:</p>
+                <pre><code>Epoch 1/10
+...
+<span class="variable">loss</span>: <span class="number">0.5123</span> - <span class="variable">accuracy</span>: <span class="number">0.8500</span>
+...
+Epoch 10/10
+...
+<span class="variable">loss</span>: <span class="number">0.1234</span> - <span class="variable">accuracy</span>: <span class="number">0.9520</span>
+</code></pre>
+                <ul>
+                    <li><span class="highlight">Accuracy</span> is the AI's "test score". <code class="inline-code">0.95</code> means it's getting 95% correct!</li>
+                    <li>You'll see graphs where <span class="highlight">accuracy goes up</span> and <span class="highlight">loss (errors) goes down</span>. This is the AI learning!</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>The "Trained Brain": Our Model File</h3>
+                <p>The final step of the training process saves all the learning into a single, small file.</p>
+                <h3 style="text-align: center; margin-top: 20px;"><code class="inline-code">plant_health_model.tflite</code></h3>
+                <p>This <code class="inline-code">.tflite</code> file is the "trained brain" of our AI. It's compact and efficient. We will download this file and put it in our project folder to use in our own application.</p>
+            </div>
+        </div>
+        
+        <!-- Module 3: Lesson 6 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 6: Anatomy of Our AI System</h2>
+                <h3>Objective: Understand the role of each Python file and how they work together.</h3>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>System Architecture: The Four Parts</h3>
+                <p>Our project is made of several files that talk to each other.</p>
+                <ul>
+                    <li><code class="inline-code">realtime_detection.py</code> <br><strong>The Frontend/Face:</strong> This is what we see. It controls the camera and draws the boxes on the screen.</li>
+                    <li><code class="inline-code">backend.py</code> <br><strong>The Backend/Brain:</strong> The "thinking" part. It uses the <code class="inline-code">.tflite</code> model to analyze the image and decide on plant health.</li>
+                    <li><code class="inline-code">sensor_monitor.py</code> & <code class="inline-code">light.py</code> <br><strong>The Senses:</strong> Extra files to read environmental data like temperature, humidity, and light. These are very important for aquaponics!</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>High-Level Code Walkthrough</h3>
+                <p>Let's peek inside the files in VS Code.</p>
+                <ul>
+                    <li>In <code class="inline-code">realtime_detection.py</code>, we'll find <code class="inline-code">ret, frame = self.cap.read()</code>. This line is constantly <span class="highlight">capturing a new frame from the webcam</span>.</li>
+                    <li>In <code class="inline-code">backend.py</code>, the <code class="inline-code">classify_produce()</code> function is where the magic happens. It takes an image and <span class="highlight">uses the .tflite model to get a prediction</span>.</li>
+                    <li>We'll also see a setting like <code class="inline-code">MQTT_BROKER</code>. This is a special address for <span class="highlight">sending an alert message over the internet</span>, like a warning from our aquaponics system to a dashboard.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Module 3: Lesson 7 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 7: A Closer Look - From Detection to Decision</h2>
+                <h3>Objective: Examine specific code snippets to see how a decision is turned into a visual output.</h3>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Code Deep Dive 1: The Color Map</h3>
+                <p>How does the program know which color to use for the box? It uses a Python <span class="highlight">dictionary</span>.</p>
+                <p>In <code class="inline-code">backend.py</code>, we find this:</p>
+                <pre><code><span class="variable">self.COLOR_MAP</span> = {
+    <span class="string">'fresh'</span>: (<span class="number">0</span>, <span class="number">255</span>, <span class="number">0</span>),   <span class="comment"># Green in (B, G, R) format for a healthy plant</span>
+    <span class="string">'spoiled'</span>: (<span class="number">0</span>, <span class="number">0</span>, <span class="number">255</span>)  <span class="comment"># Red in (B, G, R) format for a sick plant</span>
+}</code></pre>
+                <p>This links a text "key" (like 'fresh') to a "value" (the color code for green). It's a simple lookup table.</p>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Code Deep Dive 2: Drawing the Box</h3>
+                <p>In <code class="inline-code">realtime_detection.py</code>, we find the code that actually draws the rectangle.</p>
+                <pre><code><span class="comment"># 1. Look up the color based on the health status result</span>
+<span class="variable">display_color</span> = <span class="variable">self.backend.COLOR_MAP</span>.get(<span class="variable">health_status</span>, (<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>))
+
+<span class="comment"># 2. Use the OpenCV library (cv2) to draw the rectangle</span>
+<span class="function">cv2.rectangle</span>(<span class="variable">display_frame</span>, (<span class="variable">x1</span>, <span class="variable">y1</span>), (<span class="variable">x2</span>, <span class="variable">y2</span>), <span class="variable">display_color</span>, <span class="number">2</span>)</code></pre>
+                <p>This shows how we connect the backend's decision ('fresh') to a specific color from the map, and then use that color to draw on the screen. It's all connected!</p>
+            </div>
+        </div>
+        
+        <!-- Module 4: Lesson 8 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 8: Bringing it to Life!</h2>
+                <h3>Objective: Run the real-time detection script and troubleshoot common issues.</h3>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Final Setup (15 mins)</h3>
+                <p>Before we can run, we need all the required libraries.</p>
+                <p>Your teacher will provide a <code class="inline-code">requirements.txt</code> file. This is a shopping list for <code class="inline-code">pip</code>. In your activated terminal, run:</p>
+                <pre><code>pip install -r requirements.txt</code></pre>
+                <p>This command reads the file and installs all the necessary libraries at once (like <code class="inline-code">opencv-python</code>, <code class="inline-code">paho-mqtt</code>, etc.).</p>
+                <p>Also, make sure your <code class="inline-code">plant_health_model.tflite</code> file is in the project folder!</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Running the Program! (15 mins)</h3>
+                <p>This is the moment we've been waiting for.</p>
+                <p>In your activated VS Code terminal, run this command:</p>
+                <pre><code>python realtime_detection.py</code></pre>
+                <p>If all goes well, your webcam will turn on and a new window will appear. Now, point it at a plant in your aquaponics setup!</p>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Troubleshooting: A Learning Opportunity! (15 mins)</h3>
+                <p>Things don't always work on the first try, and that's okay! It's part of programming.</p>
+                <ul>
+                    <li><strong>Problem:</strong> "Camera not found" or black screen. <br><strong>Solution:</strong> Check if the webcam is plugged in. You might need to change <code class="inline-code">CAMERA_ID = 0</code> to <code class="inline-code">1</code> in the code.</li>
+                    <li><strong>Problem:</strong> "ModuleNotFoundError: No module named 'cv2'". <br><strong>Solution:</strong> You forgot to run <code class="inline-code">pip install -r requirements.txt</code> or your virtual environment isn't active.</li>
+                    <li><strong>Problem:</strong> "File not found: ... .tflite". <br><strong>Solution:</strong> Make sure the model file is in the same folder as your Python scripts.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Module 4: Lesson 9 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 9: Calibrating and Measuring Growth</h2>
+                <h3>Objective: Understand calibration and how the system can track plant growth over time.</h3>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>What is Calibration? (15 mins)</h3>
+                <p>Right now, the computer sees the world in <span class="highlight">pixels</span>, not centimeters.</p>
+                <p>Calibration is how we teach the computer the relationship between pixels and a real-world measurement. We use a reference object of a known size (e.g., a 10cm x 10cm white card).</p>
+                <p>When you run the program, you can press <kbd>c</kbd> with the card in view. The program measures the card in pixels, does the math, and then knows how to convert any pixel measurement to centimeters!</p>
+                <pre><code>Calibrated: 45.7 px/cm</code></pre>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Applications in Aquaponics: Growth Monitoring</h3>
+                <p>This tool is perfect for monitoring plant growth in an <span class="highlight">aquaponics or hydroponics</span> system.</p>
+                <p>By pressing <kbd>g</kbd>, the system enters growth mode. It logs the plant's size (area, perimeter) into a <code class="inline-code">growth_data.csv</code> file, creating a data record over time.</p>
+                <pre><code>timestamp,class_name,area_cm2,perimeter_cm
+2023-10-27 20:01:00,Lettuce,55.2,28.1
+2023-10-28 20:01:00,Lettuce,58.9,29.5
+2023-10-29 20:01:00,Lettuce,62.1,30.7</code></pre>
+                <p>This allows us to track growth rates, know when to harvest, and see if a plant is not growing well.</p>
+            </div>
+        </div>
+
+        <!-- Module 4: Lesson 10 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 10: Data, Data, Data!</h2>
+                <h3>Objective: Understand the system as a data collection tool and interpret its output.</h3>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Reviewing the Logs (20 mins)</h3>
+                <p>Our program generates valuable data for our farming project.</p>
+                <ul>
+                    <li><code class="inline-code">detection_log.txt</code>: A record of every plant check. <br> <code class="inline-code">[2023-10-27 14:30:15] - DETECTED: Lettuce_fresh with 98% confidence.</code></li>
+                    <li><code class="inline-code">issue_log.txt</code>: A special log that only records problems. <br> <code class="inline-code">[2023-10-27 14:32:05] - ISSUE: Detected Spoiled Tomato!</code></li>
+                    <li><code class="inline-code">growth_data.csv</code>: The spreadsheet with plant size data over time for analysis.</li>
+                    <li><code class="inline-code">detected_produce/</code> folder: Contains saved images, providing visual evidence of plant health.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>IoT Alerts with MQTT (15 mins)</h3>
+                <p>MQTT is a lightweight messaging system for Internet of Things (IoT) devices.</p>
+                <p><strong>Analogy:</strong> It's like a digital noticeboard for our farm.</p>
+                <ul>
+                    <li>Our program is a <span class="highlight">Publisher</span>. When it detects a sick plant, it posts a message to a topic like: <code class="inline-code">aquaponics/alerts</code>.</li>
+                    <li>The greenhouse manager's phone or a central dashboard is a <span class="highlight">Subscriber</span>. It gets the alert instantly, allowing for a fast response to save the crop!</li>
+                </ul>
+                <p>This is how we build a truly smart and automated farming system.</p>
+            </div>
+        </div>
+
+        <!-- Module 5: Lesson 11 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 11: Your First Code Modification</h2>
+                <h3>Objective: Make a simple, safe modification to the code to change the system's behavior.</h3>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Challenge: Change the Alert Color!</h3>
+                <p>The standard <span style="color: red;">red box</span> for a sick plant is good, but we want a more noticeable <span style="color: purple;">purple box</span>.</p>
+                <p>Your task is to find the right line of code and change it.</p>
+                <p><strong>Hint:</strong> Which file controls the colors? Where did we see the color codes before?</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Guided Modification (25 mins)</h3>
+                <p>1. Open <code class="inline-code">backend.py</code>.</p>
+                <p>2. Find the <code class="inline-code">COLOR_MAP</code> dictionary.</p>
+                <p>3. This is the original line for a spoiled/sick plant (B, G, R format):</p>
+                <pre><code><span class="string">'spoiled'</span>: (<span class="number">0</span>, <span class="number">0</span>, <span class="number">255</span>), <span class="comment"># Red</span></code></pre>
+                <p>4. The RGB code for purple is (128, 0, 128). In BGR format, that's (128, 0, 128).</p>
+                <p>5. Change the line to:</p>
+                <pre><code><span class="string">'spoiled'</span>: (<span class="number">128</span>, <span class="number">0</span>, <span class="number">128</span>), <span class="comment"># Purple</span></code></pre>
+                <p>6. Save the file and re-run <code class="inline-code">python realtime_detection.py</code>. The box for a sick plant should now be purple. Congratulations!</p>
+            </div>
+        </div>
+
+        <!-- Module 5: Lesson 12 -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Lesson 12: AI for a Better Future & Project Showcase</h2>
+                <h3>Objective: Reflect, brainstorm new applications for smart farming, and discuss AI ethics.</h3>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>Brainstorming: The Next Level of Smart Farming (20 mins)</h3>
+                <h3>Now that you're an AI creator, what else could we build?</h3>
+                <ul>
+                    <li>An AI to detect specific pests (like aphids or spider mites) on plant leaves.</li>
+                    <li>A system that identifies nutrient deficiencies from leaf color (e.g., yellowing leaves).</li>
+                    <li>An AI to count the fish in the aquaponics tank to monitor their health.</li>
+                    <li>A program to control a small robotic arm to automatically harvest ripe strawberries.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-content">
+                <h3>AI Ethics & Limitations (10 mins)</h3>
+                <p>AI is powerful, but not perfect. We must think critically.</p>
+                <ul>
+                    <li><span class="highlight">Bias in Data:</span> What if we only trained our AI on one type of lettuce? It might not recognize other types. The AI is only as good as the data we give it.</li>
+                    <li><span class="highlight">Accuracy vs. Trust:</span> What if the AI says a plant is healthy, but it has a disease on the underside of a leaf? We must use AI as a tool to <span class="highlight">assist</span> our judgment, not replace it.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Course Complete!</h2>
+                <h3>You have gone from "Hello, World!" to building, running, and modifying a real AI application for smart farming.</h3>
+                <p>This is just the beginning. Keep exploring, keep learning, and keep building. You have the power to use technology to shape the future of food, sustainability, and smart agriculture in Hong Kong and the world.</p>
+                <h3 style="margin-top: 40px;">Well done!</h3>
+            </div>
+        </div>
+        
+    </div>
+
+    <div class="navigation">
+        <button id="prev-btn" class="nav-btn">◀ Previous</button>
+        <button id="next-btn" class="nav-btn">Next ▶</button>
+    </div>
+    
+    <div id="page-counter"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const pageCounter = document.getElementById('page-counter');
+            let currentSlide = 0;
+
+            function showSlide(n) {
+                if (slides[currentSlide]) {
+                    slides[currentSlide].classList.remove('active');
+                }
+                currentSlide = n;
+                if (slides[currentSlide]) {
+                    slides[currentSlide].classList.add('active');
+                }
+                prevBtn.disabled = currentSlide === 0;
+                nextBtn.disabled = currentSlide === slides.length - 1;
+                pageCounter.textContent = `${currentSlide + 1} / ${slides.length}`;
+            }
+
+            function next() {
+                if (currentSlide < slides.length - 1) {
+                    showSlide(currentSlide + 1);
+                }
+            }
+
+            function prev() {
+                if (currentSlide > 0) {
+                    showSlide(currentSlide - 1);
+                }
+            }
+            
+            nextBtn.addEventListener('click', next);
+            prevBtn.addEventListener('click', prev);
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') { // Space bar to go next
+                    next();
+                    e.preventDefault();
+                } else if (e.key === 'ArrowLeft') {
+                    prev();
+                    e.preventDefault();
+                }
+            });
+
+            showSlide(0);
+        });
+    </script>
+
+</body>
+</html>
